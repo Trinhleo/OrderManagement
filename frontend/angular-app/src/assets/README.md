@@ -1,0 +1,1 @@
+This folder contains static assets such as images, icons, and i18n files.
