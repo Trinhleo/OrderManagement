@@ -1,9 +1,18 @@
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { OrderService } from '../order.service';
 import { GlobalLoadingService } from '../../../shared/global-loading.service';
+
+interface Order {
+  id: string;
+  customerName: string;
+  status: string;
+  createdAt: string;
+  lines: { product: string; quantity: number; price: number; currency: string }[];
+  _newStatus?: string;
+}
 
 @Component({
   selector: 'app-order-detail',
@@ -11,38 +20,46 @@ import { GlobalLoadingService } from '../../../shared/global-loading.service';
   styleUrls: ['./order-detail.component.css']
 })
 export class OrderDetailComponent implements OnInit {
-  order: any;
+  order: Order | null = null;
   loading = false;
-  constructor(
-    private route: ActivatedRoute,
-    private orderService: OrderService,
-    private router: Router,
-    private location: Location,
-    private globalLoading: GlobalLoadingService
-  ) { }
-  back() {
+
+  route = inject(ActivatedRoute);
+  orderService = inject(OrderService);
+  router = inject(Router);
+  location = inject(Location);
+  globalLoading = inject(GlobalLoadingService);
+  back(): void {
     this.location.back();
   }
-  ngOnInit() {
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.loading = true;
       this.globalLoading.show();
-      this.orderService.getOrder(id).subscribe(o => {
-        this.order = o;
-        this.loading = false;
-        this.globalLoading.hide();
-      }, _ => { this.loading = false; this.globalLoading.hide(); });
+      this.orderService.getOrder(id).subscribe({
+        next: (o: Order) => {
+          this.order = o;
+          this.loading = false;
+          this.globalLoading.hide();
+        },
+        error: () => {
+          this.loading = false;
+          this.globalLoading.hide();
+        }
+      });
     }
   }
-  updateStatus() {
+  updateStatus(): void {
+    if (!this.order) return;
     const newStatus = this.order._newStatus;
     if (!newStatus || newStatus === this.order.status) return;
     this.globalLoading.show();
     this.orderService.updateOrderStatus(this.order.id, newStatus).subscribe({
       next: () => {
-        this.order.status = newStatus;
-        this.order._newStatus = undefined;
+        if (this.order) {
+          this.order.status = newStatus;
+          this.order._newStatus = undefined;
+        }
         this.globalLoading.hide();
         // Optionally show a toast/snackbar here
       },

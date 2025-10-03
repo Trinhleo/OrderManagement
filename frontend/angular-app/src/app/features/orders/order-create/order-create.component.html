@@ -2,8 +2,8 @@
     <h2 class="text-2xl font-bold mb-6 text-blue-700">Create Order</h2>
     <form (ngSubmit)="place()" #orderForm="ngForm" autocomplete="off" class="space-y-6">
         <div>
-            <label class="block font-semibold mb-1">Customer Name</label>
-            <input name="customerName" [(ngModel)]="customerName" required
+            <label for="customerName" class="block font-semibold mb-1">Customer Name</label>
+            <input id="customerName" name="customerName" [(ngModel)]="customerName" required
                 class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
         </div>
         <div class="bg-gray-50 rounded p-4 mb-2">
@@ -48,7 +48,7 @@
             </button>
         </div>
         <div class="flex justify-end mt-6 gap-2">
-            <button type="button" (click)="cancel.emit()"
+            <button type="button" (click)="cancelOrder.emit()"
                 class="bg-gray-200 text-gray-700 px-6 py-2 rounded shadow hover:bg-gray-300 transition">Cancel</button>
             <button type="submit" [disabled]="orderForm.invalid || loading"
                 class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition flex items-center gap-2">

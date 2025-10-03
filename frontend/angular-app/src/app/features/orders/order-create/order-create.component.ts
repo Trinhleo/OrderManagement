@@ -1,6 +1,6 @@
 
 
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { OrderService, OrderLine } from '../order.service';
 import { GlobalLoadingService } from '../../../shared/global-loading.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -13,28 +13,26 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class OrderCreateComponent {
   customerName = '';
-  lines = [{ product: '', quantity: 1, price: 1, currency: 'USD' }];
+  lines: OrderLine[] = [{ product: '', quantity: 1, price: 1, currency: 'USD' }];
   loading = false;
 
 
   @Output() orderPlaced = new EventEmitter<void>();
-  @Output() cancel = new EventEmitter<void>();
+  @Output() cancelOrder = new EventEmitter<void>();
 
-  constructor(
-    private orderService: OrderService,
-    private snackBar: MatSnackBar,
-    private globalLoading: GlobalLoadingService
-  ) { }
+  orderService = inject(OrderService);
+  snackBar = inject(MatSnackBar);
+  globalLoading = inject(GlobalLoadingService);
 
-  addLine() {
+  addLine(): void {
     this.lines.push({ product: '', quantity: 1, price: 1, currency: 'USD' });
   }
 
-  removeLine(i: number) {
+  removeLine(i: number): void {
     this.lines.splice(i, 1);
   }
 
-  place() {
+  place(): void {
     if (!this.customerName || this.lines.some(l => !l.product || !l.quantity || !l.price || !l.currency)) return;
     this.loading = true;
     this.globalLoading.show();
@@ -46,7 +44,7 @@ export class OrderCreateComponent {
     }));
     this.orderService.placeOrder(this.customerName, lines)
       .subscribe({
-        next: res => {
+        next: (res: { orderId: string }) => {
           this.loading = false;
           this.globalLoading.hide();
           this.snackBar.open(`Order placed! ID: ${res.orderId}`, 'Close', { duration: 2000 });

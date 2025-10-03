@@ -1,11 +1,18 @@
 
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { MatSort } from '@angular/material/sort';
 import { OrderService } from '../order.service';
 import { GlobalLoadingService } from '../../../shared/global-loading.service';
-import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
+
+interface Order {
+  id: string;
+  customerName: string;
+  status: string;
+  createdAt: string;
+}
 
 @Component({
   selector: 'app-order-list',
@@ -13,7 +20,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./order-list.component.css']
 })
 export class OrderListComponent implements OnInit {
-  dataSource = new MatTableDataSource<any>([]);
+  dataSource = new MatTableDataSource<Order>([]);
   sortActive = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
   displayedColumns: string[] = ['id', 'customerName', 'status', 'createdAt'];
@@ -25,27 +32,35 @@ export class OrderListComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  constructor(private orderService: OrderService, private snackBar: MatSnackBar, private globalLoading: GlobalLoadingService) { }
+  orderService = inject(OrderService);
+  snackBar = inject(MatSnackBar);
+  globalLoading = inject(GlobalLoadingService);
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadOrders();
   }
 
-  loadOrders() {
+  loadOrders(): void {
     this.loading = true;
     this.globalLoading.show();
-    this.orderService.listOrders(this.page, this.pageSize, this.sortActive, this.sortDirection === 'desc').subscribe(res => {
-      this.dataSource.data = res.orders;
-      this.totalCount = res.totalCount;
-      this.loading = false;
-      this.globalLoading.hide();
-      if (this.paginator) {
-        this.dataSource.paginator = this.paginator;
+    this.orderService.listOrders(this.page, this.pageSize, this.sortActive, this.sortDirection === 'desc').subscribe({
+      next: (res: { orders: Order[], totalCount: number }) => {
+        this.dataSource.data = res.orders;
+        this.totalCount = res.totalCount;
+        this.loading = false;
+        this.globalLoading.hide();
+        if (this.paginator) {
+          this.dataSource.paginator = this.paginator;
+        }
+      },
+      error: () => {
+        this.loading = false;
+        this.globalLoading.hide();
       }
-    }, _ => { this.loading = false; this.globalLoading.hide(); });
+    });
   }
 
-  onSort(sort: { active: string, direction: string }) {
+  onSort(sort: { active: string, direction: string }): void {
     if (this.sortActive === sort.active) {
       // Toggle direction if same column
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -57,28 +72,28 @@ export class OrderListComponent implements OnInit {
     this.loadOrders();
   }
 
-  onPage(event: any) {
+  onPage(event: PageEvent): void {
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;
     this.loadOrders();
   }
   showCreateOrderModal = false;
 
-  openCreateOrderModal() {
+  openCreateOrderModal(): void {
     this.showCreateOrderModal = true;
   }
 
-  closeCreateOrderModal() {
+  closeCreateOrderModal(): void {
     this.showCreateOrderModal = false;
   }
 
-  onOrderPlaced() {
+  onOrderPlaced(): void {
     this.closeCreateOrderModal();
     this.loadOrders();
     this.snackBar.open('Order placed successfully!', 'Close', { duration: 2000 });
   }
 
-  changeStatus(order: any, newStatus: string) {
+  changeStatus(order: Order, newStatus: string): void {
     if (!newStatus || newStatus === order.status) return;
     this.globalLoading.show();
     this.orderService.updateOrderStatus(order.id, newStatus).subscribe({
@@ -89,7 +104,7 @@ export class OrderListComponent implements OnInit {
       },
       error: () => {
         this.globalLoading.hide();
-        this.snackBar.open('Failed to update status.', 'Close', { duration: 3000 });
+        this.snackBar.open('Failed to update order status.', 'Close', { duration: 3000 });
       }
     });
   }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrderListComponent } from './order-list.component';
-import { OrderService } from './order.service';
+import { OrderService } from '../order.service';
 import { of } from 'rxjs';
 
 class MockOrderService {
@@ -20,7 +20,7 @@ describe('OrderListComponent', () => {
 
         fixture = TestBed.createComponent(OrderListComponent);
         component = fixture.componentInstance;
-        orderService = TestBed.inject(OrderService) as any;
+        orderService = TestBed.inject(OrderService) as MockOrderService;
         fixture.detectChanges();
     });
 
