@@ -1,14 +1,33 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 
 @Component({
-    selector: 'app-root',
-    template: `
-    <nav>
-      <a routerLink="/orders" routerLinkActive="active">Order List</a> |
-      <a routerLink="/orders/create" routerLinkActive="active">Create Order</a>
-    </nav>
-    <router-outlet></router-outlet>
-  `,
-    styles: [`nav { margin-bottom: 20px; } a.active { font-weight: bold; }`]
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
 })
-export class AppComponent { }
+export class AppComponent {
+  sidebarOpen = true;
+  isDesktop = true;
+
+  constructor() {
+    this.checkScreen();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScreen();
+  }
+
+  checkScreen() {
+    this.isDesktop = window.innerWidth >= 768;
+    if (!this.isDesktop) {
+      this.sidebarOpen = false;
+    } else {
+      this.sidebarOpen = true;
+    }
+  }
+
+  toggleSidebar() {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+}

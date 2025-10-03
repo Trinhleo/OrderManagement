@@ -1,0 +1,15 @@
+.main-toolbar {
+    margin-bottom: 20px;
+}
+
+.spacer {
+    flex: 1 1 auto;
+}
+
+a.active {
+    font-weight: bold;
+}
+
+.main-content {
+    padding: 24px;
+}

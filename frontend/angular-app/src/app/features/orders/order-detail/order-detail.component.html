@@ -1,0 +1,73 @@
+<div class="flex items-center justify-between bg-gray-50 rounded shadow px-6 py-4 mb-8">
+    <div class="flex items-center gap-2">
+        <button (click)="back()" class="rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 p-2 shadow transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <nav class="flex items-center gap-2 text-sm">
+            <a routerLink="/orders" class="text-blue-600 hover:underline font-medium">Orders</a>
+            <span class="text-gray-400">/</span>
+            <span class="text-blue-700 font-semibold">Order Details</span>
+        </nav>
+    </div>
+</div>
+<div class="shadow-xl rounded-2xl bg-white max-w-3xl mx-auto my-10 p-8 relative">
+    <mat-card *ngIf="order" class="border-0 shadow-none bg-transparent">
+        <mat-card-title class="text-2xl font-bold mb-4">Order <span class="text-gray-400">#{{ order.id
+                }}</span></mat-card-title>
+        <mat-card-content>
+            <div class="mb-4 flex flex-col gap-2">
+                <div><span class="font-semibold">Customer:</span> <span class="text-gray-700">{{ order.customerName
+                        }}</span></div>
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold">Status:</span>
+                    <span class="inline-block px-3 py-1 rounded text-xs font-semibold min-w-[80px] text-center"
+                        [ngClass]="{
+                            'bg-green-100 text-green-700': order.status === 'Completed',
+                            'bg-yellow-100 text-yellow-700': order.status === 'Pending',
+                            'bg-red-100 text-red-700': order.status === 'Cancelled',
+                            'bg-gray-100 text-gray-700': order.status === 'New'
+                        }">
+                        {{ order.status }}
+                    </span>
+                    <select [(ngModel)]="order._newStatus" name="detail-status"
+                        class="border rounded px-2 py-1 text-xs">
+                        <option [ngValue]="undefined" disabled>Change status...</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                    <button *ngIf="order._newStatus && order._newStatus !== order.status" (click)="updateStatus()"
+                        class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">Update</button>
+                </div>
+                <div><span class="font-semibold">Created At:</span> <span class="text-gray-700">{{ order.createdAt |
+                        date:'short' }}</span></div>
+            </div>
+            <h3 class="text-lg font-semibold mb-3 mt-6">Lines</h3>
+            <table mat-table [dataSource]="order.lines" *ngIf="order.lines && order.lines.length > 0"
+                class="w-full border rounded overflow-hidden mb-4">
+                <ng-container matColumnDef="product">
+                    <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-2 text-left">Product</th>
+                    <td mat-cell *matCellDef="let line" class="p-2">{{ line.product }}</td>
+                </ng-container>
+                <ng-container matColumnDef="quantity">
+                    <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-2 text-left">Quantity</th>
+                    <td mat-cell *matCellDef="let line" class="p-2">{{ line.quantity }}</td>
+                </ng-container>
+                <ng-container matColumnDef="price">
+                    <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-2 text-left">Price</th>
+                    <td mat-cell *matCellDef="let line" class="p-2">{{ line.amount }} {{ line.currency }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['product','quantity','price']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['product','quantity','price'];"></tr>
+            </table>
+            <div *ngIf="!order.lines || order.lines.length === 0"
+                class="text-center text-gray-400 my-8 flex flex-col items-center">
+                <mat-icon class="text-4xl mb-2">inbox</mat-icon>
+                <span>No lines</span>
+            </div>
+        </mat-card-content>
+    </mat-card>
+</div>
