@@ -36,26 +36,41 @@ export class OrderCreateComponent {
     if (!this.customerName || this.lines.some(l => !l.product || !l.quantity || !l.price || !l.currency)) return;
     this.loading = true;
     this.globalLoading.show();
-    const lines: OrderLine[] = this.lines.map(l => ({
-      product: l.product,
-      quantity: l.quantity,
-      price: l.price,
-      currency: l.currency
-    }));
-    this.orderService.placeOrder(this.customerName, lines)
+
+    const command = {
+      customerName: this.customerName,
+      lines: this.lines.map(l => ({
+        product: l.product,
+        quantity: l.quantity,
+        price: l.price,
+        currency: l.currency
+      }))
+    };
+
+    this.orderService.placeOrder(command)
       .subscribe({
-        next: (res: { orderId: string }) => {
+        next: (res) => {
           this.loading = false;
           this.globalLoading.hide();
-          this.snackBar.open(`Order placed! ID: ${res.orderId}`, 'Close', { duration: 2000 });
+          this.snackBar.open(`Order placed successfully! ID: ${res.orderId}`, 'Close', { duration: 3000 });
           setTimeout(() => {
             this.orderPlaced.emit();
           }, 2000);
         },
-        error: () => {
+        error: (error) => {
           this.loading = false;
           this.globalLoading.hide();
-          this.snackBar.open('Failed to place order. Please try again.', 'Close', { duration: 3000 });
+          let errorMessage = 'Failed to place order. Please try again.';
+
+          if (error.status === 400 && error.error?.errors) {
+            // Handle validation errors from FluentValidation
+            const validationErrors = Object.values(error.error.errors).flat();
+            errorMessage = `Validation failed: ${validationErrors.join(', ')}`;
+          } else if (error.status === 401) {
+            errorMessage = 'Unauthorized. Please login again.';
+          }
+
+          this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
         }
       });
   }

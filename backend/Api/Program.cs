@@ -7,6 +7,14 @@ using OrderManagement.Application.Handlers;
 using OrderManagement.Domain.Repositories;
 using OrderManagement.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using OrderManagement.Api.Services;
+using OrderManagement.Api.Middleware;
+using FluentValidation;
+using OrderManagement.Application.Commands.Validators;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -14,6 +22,32 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 });
 
 builder.Services.AddControllers();
+
+// Add FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<PlaceOrderCommandValidator>();
+
+// Add JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                builder.Configuration["Jwt:Key"] ?? "your-super-secret-key-that-is-at-least-32-characters-long")),
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "OrderManagementApi",
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "OrderManagementClient",
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Add custom services
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 // Allow using in-memory database for test/smoke scenarios
 var useInMemory = builder.Configuration.GetValue<bool>("UseInMemoryDatabase") ||
@@ -63,10 +97,22 @@ builder.Services.AddOpenApiDocument(config =>
 {
     config.Title = "Order Management API";
     config.Version = "v1";
-    config.Description = "API documentation for Order Management system.";
+    config.Description = "API documentation for Order Management system with JWT Authentication.";
+
+    // Add JWT security definition
+    config.AddSecurity("JWT", Enumerable.Empty<string>(), new NSwag.OpenApiSecurityScheme
+    {
+        Type = NSwag.OpenApiSecuritySchemeType.ApiKey,
+        Name = "Authorization",
+        In = NSwag.OpenApiSecurityApiKeyLocation.Header,
+        Description = "Type into the textbox: Bearer {your JWT token}."
+    });
 });
 
 var app = builder.Build();
+
+// Add exception handling middleware
+app.UseMiddleware<ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -89,8 +135,12 @@ else
     Console.WriteLine("[Startup] HTTPS redirection disabled for in-memory mode.");
 }
 
-// ✅ Enable CORS before controllers
+// ✅ Enable CORS before authentication
 app.UseCors("AllowAngularDev");
+
+// Add authentication and authorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Simple health endpoint for readiness checks
 app.MapGet("/health", () => Results.Ok("OK"));

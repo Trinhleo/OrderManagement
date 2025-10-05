@@ -1,28 +1,41 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
 using OrderManagement.Application.Commands;
 using OrderManagement.Application.Queries;
 using OrderManagement.Application.Handlers;
+using FluentValidation;
 
 namespace OrderManagement.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Require authentication for all endpoints
     public class OrdersController : ControllerBase
     {
         private readonly PlaceOrderHandler _placeOrder;
         private readonly GetOrderHandler _getOrder;
         private readonly ListOrdersHandler _listOrders;
         private readonly UpdateOrderStatusHandler _updateStatus;
+        private readonly IValidator<PlaceOrderCommand> _placeOrderValidator;
+        private readonly IValidator<UpdateOrderStatusCommand> _updateStatusValidator;
 
-        public OrdersController(PlaceOrderHandler placeOrder, GetOrderHandler getOrder, ListOrdersHandler listOrders, UpdateOrderStatusHandler updateStatus)
+        public OrdersController(
+            PlaceOrderHandler placeOrder,
+            GetOrderHandler getOrder,
+            ListOrdersHandler listOrders,
+            UpdateOrderStatusHandler updateStatus,
+            IValidator<PlaceOrderCommand> placeOrderValidator,
+            IValidator<UpdateOrderStatusCommand> updateStatusValidator)
         {
             _placeOrder = placeOrder;
             _getOrder = getOrder;
             _listOrders = listOrders;
             _updateStatus = updateStatus;
+            _placeOrderValidator = placeOrderValidator;
+            _updateStatusValidator = updateStatusValidator;
         }
         /// <summary>
         /// Gets a paginated list of orders.
@@ -35,10 +48,19 @@ namespace OrderManagement.Api.Controllers
             return Ok(new { orders = result.Orders, totalCount = result.TotalCount });
         }
 
+        /// <summary>
+        /// Creates a new order
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> PlaceOrder([FromBody] PlaceOrderCommand cmd)
         {
-            if (cmd?.Lines == null || !cmd.Lines.Any()) return BadRequest("At least one order line is required");
+            // Validate the command
+            var validationResult = await _placeOrderValidator.ValidateAsync(cmd);
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
+
             var id = await _placeOrder.Handle(cmd);
             return Ok(new { OrderId = id });
         }
@@ -67,14 +89,27 @@ namespace OrderManagement.Api.Controllers
             return Ok(dto);
         }
 
-        public class UpdateStatusRequest { public string Status { get; set; } }
+        public class UpdateStatusRequest { public string Status { get; set; } = string.Empty; }
 
+        /// <summary>
+        /// Updates the status of an order
+        /// </summary>
         [HttpPut("{id}/status")]
+        [Authorize(Roles = "Admin,Manager")] // Only Admin and Manager can update status
         public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest req)
         {
-            if (req == null || string.IsNullOrWhiteSpace(req.Status)) return BadRequest("Status is required");
-            var ok = await _updateStatus.Handle(new UpdateOrderStatusCommand(id, req.Status));
-            if (!ok) return NotFound();
+            var command = new UpdateOrderStatusCommand(id, req.Status);
+
+            // Validate the command
+            var validationResult = await _updateStatusValidator.ValidateAsync(command);
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
+
+            var ok = await _updateStatus.Handle(command);
+            if (!ok) throw new KeyNotFoundException($"Order with ID {id} not found");
+
             return NoContent();
         }
     }

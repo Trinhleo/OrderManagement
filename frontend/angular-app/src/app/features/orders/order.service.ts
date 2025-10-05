@@ -19,25 +19,44 @@ export interface Order {
   _newStatus?: string;
 }
 
+export interface PlaceOrderCommand {
+  customerName: string;
+  lines: OrderLine[];
+}
+
+export interface PlaceOrderResponse {
+  orderId: string;
+}
+
+export interface ListOrdersResponse {
+  orders: Order[];
+  totalCount: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderService {
   private api = `${environment.apiUrl}/orders`;
   private http = inject(HttpClient);
 
-  placeOrder(customerName: string, lines: OrderLine[]): Observable<{ orderId: string }> {
-    return this.http.post<{ orderId: string }>(this.api, { customerName, lines });
+  placeOrder(command: PlaceOrderCommand): Observable<PlaceOrderResponse> {
+    return this.http.post<PlaceOrderResponse>(this.api, command);
+  }
+
+  // Convenience method for backward compatibility
+  placeOrderSimple(customerName: string, lines: OrderLine[]): Observable<PlaceOrderResponse> {
+    return this.placeOrder({ customerName, lines });
   }
 
   getOrder(id: string): Observable<Order> {
     return this.http.get<Order>(`${this.api}/${id}`);
   }
 
-  listOrders(page = 1, pageSize = 10, sortBy?: string, desc = true): Observable<{ orders: Order[], totalCount: number }> {
+  listOrders(page = 1, pageSize = 10, sortBy?: string, desc = true): Observable<ListOrdersResponse> {
     let url = `${this.api}?page=${page}&pageSize=${pageSize}`;
     if (sortBy) {
       url += `&sortBy=${sortBy}&desc=${desc}`;
     }
-    return this.http.get<{ orders: Order[], totalCount: number }>(url);
+    return this.http.get<ListOrdersResponse>(url);
   }
 
   updateOrderStatus(id: string, status: string): Observable<void> {

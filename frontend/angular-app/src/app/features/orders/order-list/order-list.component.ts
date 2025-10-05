@@ -1,18 +1,11 @@
 
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { MatSort } from '@angular/material/sort';
-import { OrderService } from '../order.service';
+import { OrderService, Order, ListOrdersResponse } from '../order.service';
 import { GlobalLoadingService } from '../../../shared/global-loading.service';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
-
-interface Order {
-  id: string;
-  customerName: string;
-  status: string;
-  createdAt: string;
-}
 
 @Component({
   selector: 'app-order-list',
@@ -44,7 +37,7 @@ export class OrderListComponent implements OnInit {
     this.loading = true;
     this.globalLoading.show();
     this.orderService.listOrders(this.page, this.pageSize, this.sortActive, this.sortDirection === 'desc').subscribe({
-      next: (res: { orders: Order[], totalCount: number }) => {
+      next: (res: ListOrdersResponse) => {
         this.dataSource.data = res.orders;
         this.totalCount = res.totalCount;
         this.loading = false;
@@ -53,9 +46,18 @@ export class OrderListComponent implements OnInit {
           this.dataSource.paginator = this.paginator;
         }
       },
-      error: () => {
+      error: (error) => {
         this.loading = false;
         this.globalLoading.hide();
+        let errorMessage = 'Failed to load orders. Please try again.';
+
+        if (error.status === 401) {
+          errorMessage = 'Unauthorized. Please login again.';
+        } else if (error.status === 0) {
+          errorMessage = 'Cannot connect to server. Please check if the API is running.';
+        }
+
+        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
       }
     });
   }
@@ -100,11 +102,22 @@ export class OrderListComponent implements OnInit {
       next: () => {
         order.status = newStatus;
         this.globalLoading.hide();
-        this.snackBar.open('Order status updated!', 'Close', { duration: 2000 });
+        this.snackBar.open('Order status updated successfully!', 'Close', { duration: 3000 });
       },
-      error: () => {
+      error: (error) => {
         this.globalLoading.hide();
-        this.snackBar.open('Failed to update order status.', 'Close', { duration: 3000 });
+        let errorMessage = 'Failed to update order status.';
+
+        if (error.status === 400 && error.error?.errors) {
+          const validationErrors = Object.values(error.error.errors).flat();
+          errorMessage = `Validation failed: ${validationErrors.join(', ')}`;
+        } else if (error.status === 401) {
+          errorMessage = 'Unauthorized. Please login again.';
+        } else if (error.status === 404) {
+          errorMessage = 'Order not found.';
+        }
+
+        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
       }
     });
   }

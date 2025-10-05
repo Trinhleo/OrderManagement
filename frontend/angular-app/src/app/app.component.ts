@@ -1,4 +1,6 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, inject, computed } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -6,8 +8,15 @@ import { Component, HostListener } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
   sidebarOpen = true;
   isDesktop = true;
+
+  // Expose auth state to template
+  readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly currentUser = this.authService.currentUser;
 
   constructor() {
     this.checkScreen();
@@ -29,5 +38,14 @@ export class AppComponent {
 
   toggleSidebar() {
     this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  logout() {
+    this.authService.logout();
+  }
+
+  navigateToProfile() {
+    // TODO: Implement profile page
+    console.log('Navigate to profile');
   }
 }
