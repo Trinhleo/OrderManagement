@@ -7,10 +7,8 @@ A comprehensive enterprise-grade order management system showcasing modern **Dom
 
 ## 🎯 **Overview**
 
-This application demonstrates **senior-level full-stack development skills** with enterprise patterns and best practices:
-
 - **Backend**: .NET 8, Clean Architecture, CQRS, JWT Authentication, FluentValidation, Global Exception Handling
-- **Frontend**: Angular 17, TypeScript, Angular Material, Tailwind CSS, JWT Authentication, Reactive Programming
+- **Frontend**: Angular 17, TypeScript, Tailwind CSS, JWT Authentication
 - **Architecture**: DDD, CQRS, Repository Pattern, Dependency Injection, HTTP Interceptors
 
 ---
