@@ -72,31 +72,53 @@ $healthOk = $false
 try { $r = Invoke-WebRequest -Uri "$publicUrl/health" -UseBasicParsing -TimeoutSec 5; if ($r.StatusCode -eq 200){ $healthOk=$true } } catch {}
 if (-not $healthOk){ Write-Log 'Health endpoint not reachable, continuing anyway...' Yellow }
 
-function Invoke-JsonPost($url,$obj){ Invoke-RestMethod -Method Post -Uri $url -Body ($obj | ConvertTo-Json -Depth 8) -ContentType 'application/json' }
+function Invoke-JsonPost($url,$obj,$token=$null){ 
+  $headers = @{'Content-Type'='application/json'}
+  if($token){ $headers['Authorization'] = "Bearer $token" }
+  Invoke-RestMethod -Method Post -Uri $url -Body ($obj | ConvertTo-Json -Depth 8) -Headers $headers
+}
+
+function Invoke-JsonGet($url,$token=$null){ 
+  $headers = @{}
+  if($token){ $headers['Authorization'] = "Bearer $token" }
+  Invoke-RestMethod -Method Get -Uri $url -Headers $headers
+}
+
+function Invoke-JsonPut($url,$obj,$token=$null){ 
+  $headers = @{'Content-Type'='application/json'}
+  if($token){ $headers['Authorization'] = "Bearer $token" }
+  Invoke-RestMethod -Method Put -Uri $url -Body ($obj | ConvertTo-Json -Depth 8) -Headers $headers
+}
 
 try {
+  Write-Log '==> Login to get authentication token'
+  $loginResp = Invoke-JsonPost "$publicUrl/api/auth/login" @{ username='admin'; password='admin123' }
+  if(-not $loginResp.token){ throw 'Login failed: no token received' }
+  $token = $loginResp.token
+  Write-Log "   Token received (Admin)" Green
+
   Write-Log '==> Placing order'
   $placeBody = @{ customerName = 'SMOKE_PowerShell'; lines = @(@{ product='SMOKE_PS_PRODUCT'; quantity=1; price=3.5; currency='USD' }) }
-  $placeResp = Invoke-JsonPost "$publicUrl/api/orders" $placeBody
+  $placeResp = Invoke-JsonPost "$publicUrl/api/orders" $placeBody $token
   if (-not $placeResp.orderId){ throw 'PlaceOrder: orderId missing' }
   Write-Log "   OrderId: $($placeResp.orderId)" Green
 
   Write-Log '==> Updating status'
-  Invoke-RestMethod -Method Put -Uri "$publicUrl/api/orders/$($placeResp.orderId)/status" -Body (@{ status='Completed'} | ConvertTo-Json) -ContentType 'application/json'
+  Invoke-JsonPut "$publicUrl/api/orders/$($placeResp.orderId)/status" @{ status='Completed'} $token
 
   Write-Log '==> Getting order'
-  $getResp = Invoke-RestMethod -Method Get -Uri "$publicUrl/api/orders/$($placeResp.orderId)"
+  $getResp = Invoke-JsonGet "$publicUrl/api/orders/$($placeResp.orderId)" $token
   if ($getResp.status -ne 'Completed'){ throw 'GetOrder: status not updated' }
   if (-not ($getResp.lines | Where-Object { $_.product -eq 'SMOKE_PS_PRODUCT' })){ throw 'GetOrder: product not found in lines' }
   Write-Log '   GetOrder OK' Green
 
   Write-Log '==> Creating extra orders for sort check'
-  Invoke-JsonPost "$publicUrl/api/orders" @{ customerName = 'SMOKE_SORT_B'; lines = @(@{ product='SMOKE_SORT_P'; quantity=1; price=1; currency='USD' }) } | Out-Null
+  Invoke-JsonPost "$publicUrl/api/orders" @{ customerName = 'SMOKE_SORT_B'; lines = @(@{ product='SMOKE_SORT_P'; quantity=1; price=1; currency='USD' }) } $token | Out-Null
   Start-Sleep -Milliseconds 50
-  Invoke-JsonPost "$publicUrl/api/orders" @{ customerName = 'SMOKE_SORT_A'; lines = @(@{ product='SMOKE_SORT_P'; quantity=1; price=1; currency='USD' }) } | Out-Null
+  Invoke-JsonPost "$publicUrl/api/orders" @{ customerName = 'SMOKE_SORT_A'; lines = @(@{ product='SMOKE_SORT_P'; quantity=1; price=1; currency='USD' }) } $token | Out-Null
 
   Write-Log '==> Listing orders with sortBy=customerName asc'
-  $listResp = Invoke-RestMethod -Method Get -Uri "$publicUrl/api/orders?page=1&pageSize=10&sortBy=customerName&desc=false"
+  $listResp = Invoke-JsonGet "$publicUrl/api/orders?page=1&pageSize=10&sortBy=customerName&desc=false" $token
   if (-not $listResp.orders){ throw 'ListOrders: orders field missing' }
   $names = $listResp.orders | Select-Object -ExpandProperty customerName
   $alphaIndex = [Array]::IndexOf($names, 'SMOKE_SORT_A')

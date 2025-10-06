@@ -39,6 +39,7 @@ export class OrderListComponent implements OnInit {
   loadOrders(): void {
     this.loading = true;
     this.globalLoading.show();
+
     this.orderService.listOrders(this.page, this.pageSize, this.sortActive, this.sortDirection === 'desc').subscribe({
       next: (res: ListOrdersResponse) => {
         this.orders = res.orders;
@@ -64,10 +65,14 @@ export class OrderListComponent implements OnInit {
 
   onSort(column: string): void {
     if (this.sortActive === column) {
+      // Toggle direction for same column
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
+      // Set new column with appropriate default direction
       this.sortActive = column;
-      this.sortDirection = 'asc';
+      // For datetime fields, default to desc (newest first)
+      // For other fields, default to asc
+      this.sortDirection = (column === 'createdAt') ? 'desc' : 'asc';
     }
     this.page = 1; // Reset to first page when sorting
     this.loadOrders();
