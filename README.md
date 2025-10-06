@@ -1,6 +1,5 @@
 # 🏢 Order Management System - Enterprise Demo
 
-> **Senior .NET Fullstack with Angular** - Interview Ready Application
 
 A comprehensive enterprise-grade order management system showcasing modern **Domain-Driven Design (DDD)**, **CQRS**, **JWT Authentication**, and **Clean Architecture** patterns using **.NET 8** backend with **Angular 17** frontend.
 
