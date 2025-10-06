@@ -31,7 +31,10 @@ namespace OrderManagement.Infrastructure.Persistence
         {
             var baseQuery = _db.Orders.AsQueryable();
 
-            // Apply sorting first
+            // ? Count FIRST - before any sorting/pagination for accuracy and performance
+            var total = await baseQuery.CountAsync();
+
+            // Apply sorting AFTER counting but BEFORE pagination
             if (!string.IsNullOrWhiteSpace(sortBy))
             {
                 var key = sortBy.ToLowerInvariant();
@@ -50,11 +53,12 @@ namespace OrderManagement.Infrastructure.Persistence
                 baseQuery = baseQuery.OrderByDescending(o => o.CreatedAt);
             }
 
-            var total = await baseQuery.CountAsync();
+            // Apply pagination LAST - after sorting
             var orders = await baseQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+
             return (orders, total);
         }
     }

@@ -38,28 +38,30 @@
             <tr>
                 <th (click)="onSort('id')" class="sortable-header">
                     ID
-                    <span class="sort-arrow" [class.active]="sortActive === 'id'" *ngIf="sortActive === 'id'">
-                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    <span class="sort-arrow" [class.active]="sortActive === 'id'">
+                        <span *ngIf="sortActive === 'id'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        <span *ngIf="sortActive !== 'id'" class="sort-inactive">↕</span>
                     </span>
                 </th>
                 <th (click)="onSort('customerName')" class="sortable-header">
                     Customer
-                    <span class="sort-arrow" [class.active]="sortActive === 'customerName'"
-                        *ngIf="sortActive === 'customerName'">
-                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    <span class="sort-arrow" [class.active]="sortActive === 'customerName'">
+                        <span *ngIf="sortActive === 'customerName'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        <span *ngIf="sortActive !== 'customerName'" class="sort-inactive">↕</span>
                     </span>
                 </th>
                 <th (click)="onSort('status')" class="sortable-header">
                     Status
-                    <span class="sort-arrow" [class.active]="sortActive === 'status'" *ngIf="sortActive === 'status'">
-                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    <span class="sort-arrow" [class.active]="sortActive === 'status'">
+                        <span *ngIf="sortActive === 'status'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        <span *ngIf="sortActive !== 'status'" class="sort-inactive">↕</span>
                     </span>
                 </th>
                 <th (click)="onSort('createdAt')" class="sortable-header">
                     Created At
-                    <span class="sort-arrow" [class.active]="sortActive === 'createdAt'"
-                        *ngIf="sortActive === 'createdAt'">
-                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    <span class="sort-arrow" [class.active]="sortActive === 'createdAt'">
+                        <span *ngIf="sortActive === 'createdAt'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+                        <span *ngIf="sortActive !== 'createdAt'" class="sort-inactive">↕</span>
                     </span>
                 </th>
                 <th>Actions</th>

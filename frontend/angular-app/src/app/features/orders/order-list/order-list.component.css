@@ -220,6 +220,12 @@
     color: #2563eb;
 }
 
+.sort-inactive {
+    opacity: 0.2;
+    font-size: 0.8em;
+    color: #9ca3af;
+}
+
 .orders-table td {
     padding: 16px 20px;
     border-bottom: 1px solid #e5e7eb;
