@@ -11,8 +11,8 @@ export interface LoginRequest {
 
 export interface LoginResponse {
     token: string;
-    expiresAt: string;
     username: string;
+    roles: string[];
 }
 
 export interface User {
@@ -25,7 +25,7 @@ export interface User {
 export class AuthService {
     private readonly http = inject(HttpClient);
     private readonly router = inject(Router);
-    private readonly apiUrl = `${environment.apiUrl}/auth`;
+    private readonly apiUrl = `${environment.apiUrl}/Auth`; // Note: Capital A for Auth
 
     // Modern Angular 17 signals
     private readonly currentUserSignal = signal<User | null>(null);
@@ -44,16 +44,25 @@ export class AuthService {
     }
 
     login(credentials: LoginRequest): Observable<LoginResponse> {
+        console.log('AuthService.login() called with:', { username: credentials.username });
+        console.log('Making request to:', `${this.apiUrl}/login`);
+
         return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials).pipe(
             tap(response => {
+                console.log('Login response received:', response);
+
+                // Parse JWT token to get expiration time
+                const tokenExpirationTime = this.getTokenExpiration(response.token);
+
                 const user: User = {
                     username: response.username,
                     token: response.token,
-                    expiresAt: new Date(response.expiresAt)
+                    expiresAt: tokenExpirationTime
                 };
 
                 this.setCurrentUser(user);
                 this.saveUserToStorage(user);
+                console.log('User saved to storage:', user);
             })
         );
     }
@@ -61,7 +70,7 @@ export class AuthService {
     logout(): void {
         this.currentUserSignal.set(null);
         this.removeUserFromStorage();
-        this.router.navigate(['/login']);
+        this.router.navigate(['/auth/login']);
     }
 
     refreshToken(): Observable<LoginResponse | null> {
@@ -87,16 +96,31 @@ export class AuthService {
         return user?.token || null;
     }
 
+    private getTokenExpiration(token: string): Date {
+        try {
+            // Decode JWT token to get expiration
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            // JWT exp is in seconds, convert to milliseconds
+            return new Date(payload.exp * 1000);
+        } catch (error) {
+            console.error('Error parsing JWT token:', error);
+            // Default to 1 hour from now if parsing fails
+            return new Date(Date.now() + 60 * 60 * 1000);
+        }
+    }
+
     private setCurrentUser(user: User): void {
         this.currentUserSignal.set(user);
     }
 
     private saveUserToStorage(user: User): void {
-        localStorage.setItem('currentUser', JSON.stringify({
+        const userToSave = {
             username: user.username,
             token: user.token,
-            expiresAt: user.expiresAt.toISOString()
-        }));
+            expiresAt: user.expiresAt.toISOString() // Convert Date to ISO string
+        };
+        console.log('Saving user to localStorage:', userToSave);
+        localStorage.setItem('currentUser', JSON.stringify(userToSave));
     }
 
     private loadUserFromStorage(): void {

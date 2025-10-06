@@ -23,10 +23,30 @@ namespace OrderManagement.Infrastructure.Persistence
             return Task.CompletedTask;
         }
 
-        public Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        public Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedAsync(int page, int pageSize, string? sortBy = null, bool descending = true)
         {
-            var allOrders = _store.Values.OrderByDescending(o => o.CreatedAt).ToList();
-            int total = allOrders.Count;
+            var allOrders = _store.Values.AsQueryable();
+
+            // Apply sorting first
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var key = sortBy.ToLowerInvariant();
+                allOrders = key switch
+                {
+                    "id" => descending ? allOrders.OrderByDescending(o => o.Id) : allOrders.OrderBy(o => o.Id),
+                    "customername" => descending ? allOrders.OrderByDescending(o => o.CustomerName) : allOrders.OrderBy(o => o.CustomerName),
+                    "status" => descending ? allOrders.OrderByDescending(o => o.Status) : allOrders.OrderBy(o => o.Status),
+                    "createdat" => descending ? allOrders.OrderByDescending(o => o.CreatedAt) : allOrders.OrderBy(o => o.CreatedAt),
+                    _ => allOrders.OrderByDescending(o => o.CreatedAt) // Default sort
+                };
+            }
+            else
+            {
+                // Default sort by CreatedAt descending (newest first)
+                allOrders = allOrders.OrderByDescending(o => o.CreatedAt);
+            }
+
+            int total = allOrders.Count();
             var paged = allOrders.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             return Task.FromResult(((IEnumerable<Order>)paged, total));
         }

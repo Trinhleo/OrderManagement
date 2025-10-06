@@ -19,6 +19,26 @@ public class PlaceOrderCommandValidator : AbstractValidator<PlaceOrderCommand>
     }
 }
 
+public class UpdateOrderStatusCommandValidator : AbstractValidator<UpdateOrderStatusCommand>
+{
+    public UpdateOrderStatusCommandValidator()
+    {
+        RuleFor(x => x.OrderId)
+            .NotEmpty().WithMessage("Order ID is required");
+
+        RuleFor(x => x.Status)
+            .NotEmpty().WithMessage("Status is required")
+            .Must(status => IsValidStatus(status))
+            .WithMessage("Status must be one of: New, Pending, Completed, Cancelled");
+    }
+
+    private static bool IsValidStatus(string status)
+    {
+        var validStatuses = new[] { "New", "Pending", "Completed", "Cancelled" };
+        return validStatuses.Contains(status, StringComparer.OrdinalIgnoreCase);
+    }
+}
+
 public class PlaceOrderLineValidator : AbstractValidator<PlaceOrderLine>
 {
     public PlaceOrderLineValidator()

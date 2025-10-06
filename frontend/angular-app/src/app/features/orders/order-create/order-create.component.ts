@@ -3,7 +3,7 @@
 import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { OrderService, OrderLine } from '../order.service';
 import { GlobalLoadingService } from '../../../shared/global-loading.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../shared/toast.service';
 
 @Component({
   selector: 'app-order-create',
@@ -21,7 +21,7 @@ export class OrderCreateComponent {
   @Output() cancelOrder = new EventEmitter<void>();
 
   orderService = inject(OrderService);
-  snackBar = inject(MatSnackBar);
+  toastService = inject(ToastService);
   globalLoading = inject(GlobalLoadingService);
 
   addLine(): void {
@@ -52,7 +52,7 @@ export class OrderCreateComponent {
         next: (res) => {
           this.loading = false;
           this.globalLoading.hide();
-          this.snackBar.open(`Order placed successfully! ID: ${res.orderId}`, 'Close', { duration: 3000 });
+          this.toastService.success(`Order placed successfully! ID: ${res.orderId}`);
           setTimeout(() => {
             this.orderPlaced.emit();
           }, 2000);
@@ -70,7 +70,7 @@ export class OrderCreateComponent {
             errorMessage = 'Unauthorized. Please login again.';
           }
 
-          this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+          this.toastService.error(errorMessage);
         }
       });
   }

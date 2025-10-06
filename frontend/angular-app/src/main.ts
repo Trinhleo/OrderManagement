@@ -1,6 +1,23 @@
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { importProvidersFrom } from '@angular/core';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 
-import { AppModule } from './app/app.module';
+import { AppComponent } from './app/app.component';
+import { routes } from './app/app-routing.module';
+import { jwtInterceptor } from './app/core/interceptors/jwt.interceptor';
+import { errorInterceptor } from './app/core/interceptors/error.interceptor';
+import { debugInterceptor } from './app/core/interceptors/debug.interceptor';
 
-platformBrowserDynamic().bootstrapModule(AppModule)
-    .catch(err => console.error(err));
+bootstrapApplication(AppComponent, {
+    providers: [
+        provideRouter(routes),
+        provideAnimations(),
+        provideHttpClient(
+            withInterceptors([debugInterceptor, jwtInterceptor, errorInterceptor])
+        ),
+        importProvidersFrom(MatSnackBarModule)
+    ]
+}).catch(err => console.error(err));

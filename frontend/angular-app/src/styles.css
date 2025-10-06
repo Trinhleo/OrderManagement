@@ -1,81 +1,25 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Global reset and base styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-/* Global styles */
 body {
-    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
     background: #f8fafc;
 }
 
-/* Custom Material Design overrides */
-.mat-mdc-snack-bar-container {
-    --mdc-snackbar-container-color: #323232;
-    --mdc-snackbar-supporting-text-color: white;
-}
-
-/* Error snackbar styling */
-.error-snackbar {
-    --mdc-snackbar-container-color: #f87171 !important;
-    --mdc-snackbar-supporting-text-color: white !important;
-}
-
-/* Success snackbar styling */
-.success-snackbar {
-    --mdc-snackbar-container-color: #10b981 !important;
-    --mdc-snackbar-supporting-text-color: white !important;
-}
-
-/* Warning snackbar styling */
-.warning-snackbar {
-    --mdc-snackbar-container-color: #f59e0b !important;
-    --mdc-snackbar-supporting-text-color: white !important;
-}
-
-/* Custom form field styling */
-.mat-mdc-form-field {
-    width: 100%;
-}
-
-/* Card elevation */
-.mat-mdc-card {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-}
-
-/* Loading spinner overlay */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-nav a.active {
-    font-weight: bold;
-    text-decoration: underline;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-
-.table th,
-.table td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-}
-
-.pagination {
-    margin: 10px 0;
+/* Remove any default form styling */
+input,
+button,
+textarea,
+select {
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    outline: none;
+    background: none;
 }

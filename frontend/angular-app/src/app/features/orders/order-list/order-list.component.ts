@@ -1,11 +1,8 @@
 
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
-import { MatSort } from '@angular/material/sort';
+import { Component, OnInit, inject } from '@angular/core';
 import { OrderService, Order, ListOrdersResponse } from '../order.service';
 import { GlobalLoadingService } from '../../../shared/global-loading.service';
-import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { MatTableDataSource } from '@angular/material/table';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { ToastService } from '../../../shared/toast.service';
 
 @Component({
   selector: 'app-order-list',
@@ -13,7 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   styleUrls: ['./order-list.component.css']
 })
 export class OrderListComponent implements OnInit {
-  dataSource = new MatTableDataSource<Order>([]);
+  orders: Order[] = [];
   sortActive = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
   displayedColumns: string[] = ['id', 'customerName', 'status', 'createdAt'];
@@ -21,13 +18,19 @@ export class OrderListComponent implements OnInit {
   page = 1;
   pageSize = 10;
   loading = false;
-
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  showCreateOrderModal = false;
 
   orderService = inject(OrderService);
-  snackBar = inject(MatSnackBar);
   globalLoading = inject(GlobalLoadingService);
+  toastService = inject(ToastService);
+
+  // Expose Math for template
+  Math = Math;
+
+  // Create a simple data source object
+  get dataSource() {
+    return { data: this.orders };
+  }
 
   ngOnInit(): void {
     this.loadOrders();
@@ -38,13 +41,10 @@ export class OrderListComponent implements OnInit {
     this.globalLoading.show();
     this.orderService.listOrders(this.page, this.pageSize, this.sortActive, this.sortDirection === 'desc').subscribe({
       next: (res: ListOrdersResponse) => {
-        this.dataSource.data = res.orders;
+        this.orders = res.orders;
         this.totalCount = res.totalCount;
         this.loading = false;
         this.globalLoading.hide();
-        if (this.paginator) {
-          this.dataSource.paginator = this.paginator;
-        }
       },
       error: (error) => {
         this.loading = false;
@@ -57,29 +57,41 @@ export class OrderListComponent implements OnInit {
           errorMessage = 'Cannot connect to server. Please check if the API is running.';
         }
 
-        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+        this.toastService.error(errorMessage);
       }
     });
   }
 
-  onSort(sort: { active: string, direction: string }): void {
-    if (this.sortActive === sort.active) {
-      // Toggle direction if same column
+  onSort(column: string): void {
+    if (this.sortActive === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-      // New column, default to ascending
-      this.sortActive = sort.active;
+      this.sortActive = column;
       this.sortDirection = 'asc';
     }
+    this.page = 1; // Reset to first page when sorting
     this.loadOrders();
   }
 
-  onPage(event: PageEvent): void {
-    this.page = event.pageIndex + 1;
-    this.pageSize = event.pageSize;
+  onPageSizeChange(): void {
+    this.page = 1; // Reset to first page when page size changes
     this.loadOrders();
   }
-  showCreateOrderModal = false;
+
+  // Pagination methods
+  nextPage(): void {
+    if (this.page * this.pageSize < this.totalCount) {
+      this.page++;
+      this.loadOrders();
+    }
+  }
+
+  previousPage(): void {
+    if (this.page > 1) {
+      this.page--;
+      this.loadOrders();
+    }
+  }
 
   openCreateOrderModal(): void {
     this.showCreateOrderModal = true;
@@ -92,7 +104,11 @@ export class OrderListComponent implements OnInit {
   onOrderPlaced(): void {
     this.closeCreateOrderModal();
     this.loadOrders();
-    this.snackBar.open('Order placed successfully!', 'Close', { duration: 2000 });
+    this.toastService.success('Order placed successfully!');
+  }
+
+  trackByOrderId(index: number, order: Order): string {
+    return order.id;
   }
 
   changeStatus(order: Order, newStatus: string): void {
@@ -102,7 +118,7 @@ export class OrderListComponent implements OnInit {
       next: () => {
         order.status = newStatus;
         this.globalLoading.hide();
-        this.snackBar.open('Order status updated successfully!', 'Close', { duration: 3000 });
+        this.toastService.success('Order status updated successfully!');
       },
       error: (error) => {
         this.globalLoading.hide();
@@ -117,7 +133,7 @@ export class OrderListComponent implements OnInit {
           errorMessage = 'Order not found.';
         }
 
-        this.snackBar.open(errorMessage, 'Close', { duration: 5000 });
+        this.toastService.error(errorMessage);
       }
     });
   }

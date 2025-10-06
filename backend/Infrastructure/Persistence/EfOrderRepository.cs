@@ -27,11 +27,30 @@ namespace OrderManagement.Infrastructure.Persistence
             await _db.SaveChangesAsync();
         }
 
-        public async Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedAsync(int page, int pageSize)
+        public async Task<(IEnumerable<Order> Orders, int TotalCount)> GetPagedAsync(int page, int pageSize, string? sortBy = null, bool descending = true)
         {
             var baseQuery = _db.Orders.AsQueryable();
+
+            // Apply sorting first
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                var key = sortBy.ToLowerInvariant();
+                baseQuery = key switch
+                {
+                    "id" => descending ? baseQuery.OrderByDescending(o => o.Id) : baseQuery.OrderBy(o => o.Id),
+                    "customername" => descending ? baseQuery.OrderByDescending(o => o.CustomerName) : baseQuery.OrderBy(o => o.CustomerName),
+                    "status" => descending ? baseQuery.OrderByDescending(o => o.Status) : baseQuery.OrderBy(o => o.Status),
+                    "createdat" => descending ? baseQuery.OrderByDescending(o => o.CreatedAt) : baseQuery.OrderBy(o => o.CreatedAt),
+                    _ => baseQuery.OrderByDescending(o => o.CreatedAt) // Default sort
+                };
+            }
+            else
+            {
+                // Default sort by CreatedAt descending (newest first)
+                baseQuery = baseQuery.OrderByDescending(o => o.CreatedAt);
+            }
+
             var total = await baseQuery.CountAsync();
-            // Remove default ordering, let application layer handle ordering after paging for deterministic subset testing
             var orders = await baseQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)

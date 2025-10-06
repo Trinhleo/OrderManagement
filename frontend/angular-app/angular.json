@@ -1,7 +1,6 @@
 {
-    "$schema": "https://json.schemastore.org/angular-cli",
+    "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
     "version": 1,
-    "defaultProject": "angular-app",
     "projects": {
         "angular-app": {
             "projectType": "application",
@@ -37,7 +36,6 @@
                             "optimization": true,
                             "outputHashing": "all",
                             "sourceMap": false,
-                            "extractCss": true,
                             "namedChunks": false,
                             "extractLicenses": true,
                             "vendorChunk": false,
@@ -48,11 +46,11 @@
                 "serve": {
                     "builder": "@angular-devkit/build-angular:dev-server",
                     "options": {
-                        "browserTarget": "angular-app:build"
+                        "buildTarget": "angular-app:build"
                     },
                     "configurations": {
                         "production": {
-                            "browserTarget": "angular-app:build:production"
+                            "buildTarget": "angular-app:build:production"
                         }
                     }
                 },

@@ -16,6 +16,7 @@ import { OrderListComponent } from './order-list/order-list.component';
 import { OrderCreateComponent } from './order-create/order-create.component';
 import { OrderDetailComponent } from './order-detail/order-detail.component';
 import { OrderService } from './order.service';
+import { SharedModule } from '../../shared/shared.module';
 
 @NgModule({
     declarations: [OrderListComponent, OrderCreateComponent, OrderDetailComponent],
@@ -32,7 +33,8 @@ import { OrderService } from './order.service';
         MatInputModule,
         MatIconModule,
         MatMenuModule,
-        MatSortModule
+        MatSortModule,
+        SharedModule
     ],
     providers: [OrderService]
 })

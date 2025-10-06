@@ -1,51 +1,31 @@
-import { Component, HostListener, inject, computed } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from './core/services/auth.service';
+import { CleanLoginComponent } from './features/auth/login/clean-login.component';
+import { ToastComponent } from './shared/toast.component';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    CleanLoginComponent,
+    ToastComponent
+  ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  private readonly authService = inject(AuthService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
-
-  sidebarOpen = true;
-  isDesktop = true;
 
   // Expose auth state to template
   readonly isAuthenticated = this.authService.isAuthenticated;
   readonly currentUser = this.authService.currentUser;
 
-  constructor() {
-    this.checkScreen();
-  }
-
-  @HostListener('window:resize')
-  onResize() {
-    this.checkScreen();
-  }
-
-  checkScreen() {
-    this.isDesktop = window.innerWidth >= 768;
-    if (!this.isDesktop) {
-      this.sidebarOpen = false;
-    } else {
-      this.sidebarOpen = true;
-    }
-  }
-
-  toggleSidebar() {
-    this.sidebarOpen = !this.sidebarOpen;
-  }
-
   logout() {
     this.authService.logout();
-  }
-
-  navigateToProfile() {
-    // TODO: Implement profile page
-    console.log('Navigate to profile');
   }
 }

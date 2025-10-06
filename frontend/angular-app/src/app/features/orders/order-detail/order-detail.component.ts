@@ -10,7 +10,7 @@ interface Order {
   customerName: string;
   status: string;
   createdAt: string;
-  lines: { product: string; quantity: number; price: number; currency: string }[];
+  lines: { product: string; quantity: number; price: number; amount?: number; currency: string }[];
   _newStatus?: string;
 }
 
@@ -49,6 +49,7 @@ export class OrderDetailComponent implements OnInit {
       });
     }
   }
+
   updateStatus(): void {
     if (!this.order) return;
     const newStatus = this.order._newStatus;
@@ -68,5 +69,15 @@ export class OrderDetailComponent implements OnInit {
         // Optionally show a toast/snackbar here
       }
     });
+  }
+
+  getTotalQuantity(): number {
+    if (!this.order?.lines) return 0;
+    return this.order.lines.reduce((total, line) => total + line.quantity, 0);
+  }
+
+  getTotalAmount(): number {
+    if (!this.order?.lines) return 0;
+    return this.order.lines.reduce((total, line) => total + (line.amount || line.price || 0), 0);
   }
 }

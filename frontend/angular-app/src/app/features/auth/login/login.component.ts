@@ -42,9 +42,9 @@ import { AuthService } from '../../../core/services/auth.service';
               <mat-label>Username</mat-label>
               <input matInput formControlName="username" required>
               <mat-icon matPrefix>person</mat-icon>
-              @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
-                <mat-error>Username is required</mat-error>
-              }
+              <mat-error *ngIf="loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched">
+                Username is required
+              </mat-error>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="w-full">
@@ -54,9 +54,9 @@ import { AuthService } from '../../../core/services/auth.service';
               <button mat-icon-button matSuffix (click)="togglePasswordVisibility()" type="button">
                 <mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon>
               </button>
-              @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
-                <mat-error>Password is required</mat-error>
-              }
+              <mat-error *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched">
+                Password is required
+              </mat-error>
             </mat-form-field>
 
             <button 
@@ -65,20 +65,15 @@ import { AuthService } from '../../../core/services/auth.service';
               type="submit" 
               class="w-full h-12"
               [disabled]="loginForm.invalid || isLoading()">
-              @if (isLoading()) {
+              <span *ngIf="isLoading()">
                 <mat-spinner diameter="20" class="mr-2"></mat-spinner>
                 Signing in...
-              } @else {
+              </span>
+              <span *ngIf="!isLoading()">
                 Sign In
-              }
+              </span>
             </button>
           </form>
-
-          <div class="mt-4 text-center">
-            <p class="text-sm text-gray-600">
-              Demo credentials: admin / admin123
-            </p>
-          </div>
         </mat-card>
       </div>
     </div>
@@ -90,6 +85,25 @@ import { AuthService } from '../../../core/services/auth.service';
     
     .mat-mdc-form-field {
       width: 100%;
+      margin-bottom: 16px;
+    }
+    
+    .mat-mdc-card {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border-radius: 8px;
+    }
+    
+    .space-y-4 > * + * {
+      margin-top: 1rem;
+    }
+    
+    .mr-2 {
+      margin-right: 0.5rem;
+    }
+    
+    mat-spinner {
+      display: inline-block;
+      vertical-align: middle;
     }
   `]
 })

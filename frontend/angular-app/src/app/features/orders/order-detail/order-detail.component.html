@@ -1,73 +1,126 @@
-<div class="flex items-center justify-between bg-gray-50 rounded shadow px-6 py-4 mb-8">
-    <div class="flex items-center gap-2">
-        <button (click)="back()" class="rounded-full bg-blue-100 hover:bg-blue-200 text-blue-700 p-2 shadow transition">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-        </button>
-        <nav class="flex items-center gap-2 text-sm">
-            <a routerLink="/orders" class="text-blue-600 hover:underline font-medium">Orders</a>
-            <span class="text-gray-400">/</span>
-            <span class="text-blue-700 font-semibold">Order Details</span>
-        </nav>
+<div class="order-detail-container">
+    <!-- Navigation Header -->
+    <div class="navigation-header">
+        <div class="nav-content">
+            <button (click)="back()" class="back-btn">
+                <svg class="back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <nav class="breadcrumb">
+                <a routerLink="/orders" class="breadcrumb-link">Orders</a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">Order Details</span>
+            </nav>
+        </div>
     </div>
-</div>
-<div class="shadow-xl rounded-2xl bg-white max-w-3xl mx-auto my-10 p-8 relative">
-    <mat-card *ngIf="order" class="border-0 shadow-none bg-transparent">
-        <mat-card-title class="text-2xl font-bold mb-4">Order <span class="text-gray-400">#{{ order.id
-                }}</span></mat-card-title>
-        <mat-card-content>
-            <div class="mb-4 flex flex-col gap-2">
-                <div><span class="font-semibold">Customer:</span> <span class="text-gray-700">{{ order.customerName
-                        }}</span></div>
-                <div class="flex items-center gap-2">
-                    <span class="font-semibold">Status:</span>
-                    <span class="inline-block px-3 py-1 rounded text-xs font-semibold min-w-[80px] text-center"
-                        [ngClass]="{
-                            'bg-green-100 text-green-700': order.status === 'Completed',
-                            'bg-yellow-100 text-yellow-700': order.status === 'Pending',
-                            'bg-red-100 text-red-700': order.status === 'Cancelled',
-                            'bg-gray-100 text-gray-700': order.status === 'New'
-                        }">
-                        {{ order.status }}
-                    </span>
-                    <select [(ngModel)]="order._newStatus" name="detail-status"
-                        class="border rounded px-2 py-1 text-xs">
-                        <option [ngValue]="undefined" disabled>Change status...</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                    <button *ngIf="order._newStatus && order._newStatus !== order.status" (click)="updateStatus()"
-                        class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">Update</button>
+
+    <!-- Order Detail Card -->
+    <div class="order-card" *ngIf="order">
+        <!-- Order Header -->
+        <div class="order-header">
+            <div class="order-title-section">
+                <h1 class="order-title">Order Details</h1>
+                <div class="order-id">#{{ order.id }}</div>
+            </div>
+            <div class="status-section">
+                <span class="status-badge" [class.status-new]="order.status === 'New'"
+                    [class.status-pending]="order.status === 'Pending'"
+                    [class.status-completed]="order.status === 'Completed'"
+                    [class.status-cancelled]="order.status === 'Cancelled'">
+                    {{ order.status }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Order Information -->
+        <div class="order-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <label class="info-label">Customer</label>
+                    <div class="info-value">{{ order.customerName }}</div>
                 </div>
-                <div><span class="font-semibold">Created At:</span> <span class="text-gray-700">{{ order.createdAt |
-                        date:'short' }}</span></div>
+                <div class="info-item">
+                    <label class="info-label">Created At</label>
+                    <div class="info-value">{{ order.createdAt | localDate:'medium' }}</div>
+                </div>
+                <div class="info-item">
+                    <label class="info-label">Status Management</label>
+                    <div class="status-controls">
+                        <select [(ngModel)]="order._newStatus" class="status-select">
+                            <option [ngValue]="undefined" disabled>Change status...</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                        <button *ngIf="order._newStatus && order._newStatus !== order.status" (click)="updateStatus()"
+                            class="update-btn">
+                            Update Status
+                        </button>
+                    </div>
+                </div>
             </div>
-            <h3 class="text-lg font-semibold mb-3 mt-6">Lines</h3>
-            <table mat-table [dataSource]="order.lines" *ngIf="order.lines && order.lines.length > 0"
-                class="w-full border rounded overflow-hidden mb-4">
-                <ng-container matColumnDef="product">
-                    <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-2 text-left">Product</th>
-                    <td mat-cell *matCellDef="let line" class="p-2">{{ line.product }}</td>
-                </ng-container>
-                <ng-container matColumnDef="quantity">
-                    <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-2 text-left">Quantity</th>
-                    <td mat-cell *matCellDef="let line" class="p-2">{{ line.quantity }}</td>
-                </ng-container>
-                <ng-container matColumnDef="price">
-                    <th mat-header-cell *matHeaderCellDef class="bg-gray-100 p-2 text-left">Price</th>
-                    <td mat-cell *matCellDef="let line" class="p-2">{{ line.amount }} {{ line.currency }}</td>
-                </ng-container>
-                <tr mat-header-row *matHeaderRowDef="['product','quantity','price']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['product','quantity','price'];"></tr>
-            </table>
-            <div *ngIf="!order.lines || order.lines.length === 0"
-                class="text-center text-gray-400 my-8 flex flex-col items-center">
-                <mat-icon class="text-4xl mb-2">inbox</mat-icon>
-                <span>No lines</span>
+        </div>
+
+        <!-- Order Lines Section -->
+        <div class="lines-section">
+            <div class="section-header">
+                <h2 class="section-title">Order Items</h2>
+                <div class="items-count" *ngIf="order.lines && order.lines.length > 0">
+                    {{ order.lines.length }} item{{ order.lines.length !== 1 ? 's' : '' }}
+                </div>
             </div>
-        </mat-card-content>
-    </mat-card>
+
+            <div class="lines-content" *ngIf="order.lines && order.lines.length > 0">
+                <div class="lines-table">
+                    <div class="table-header">
+                        <div class="header-product">Product</div>
+                        <div class="header-quantity">Quantity</div>
+                        <div class="header-price">Price</div>
+                    </div>
+                    <div class="table-body">
+                        <div class="table-row" *ngFor="let line of order.lines">
+                            <div class="cell-product">
+                                <div class="product-name">{{ line.product }}</div>
+                            </div>
+                            <div class="cell-quantity">
+                                <span class="quantity-badge">{{ line.quantity }}</span>
+                            </div>
+                            <div class="cell-price">
+                                <span class="price-amount">{{ line.amount }}</span>
+                                <span class="price-currency">{{ line.currency }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="order-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">Total Items:</span>
+                        <span class="summary-value">{{ getTotalQuantity() }}</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span class="summary-label">Total Amount:</span>
+                        <span class="summary-value">{{ getTotalAmount() | currency:'USD':'symbol':'1.2-2' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" *ngIf="!order.lines || order.lines.length === 0">
+                <div class="empty-icon">📦</div>
+                <div class="empty-title">No items found</div>
+                <div class="empty-description">This order doesn't have any items yet.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="loading">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">Loading order details...</div>
+        </div>
+    </div>
 </div>
