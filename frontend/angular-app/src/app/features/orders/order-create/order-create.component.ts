@@ -55,7 +55,7 @@ export class OrderCreateComponent {
           this.toastService.success(`Order placed successfully! ID: ${res.orderId}`);
           setTimeout(() => {
             this.orderPlaced.emit();
-          }, 2000);
+          }, 500);
         },
         error: (error) => {
           this.loading = false;
