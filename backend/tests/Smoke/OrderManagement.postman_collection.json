@@ -1,0 +1,96 @@
+{
+  "info": {
+    "name": "OrderManagement Smoke",
+    "_postman_id": "b6d2c0d2-5f8e-4e6c-9af5-aaaa11112222",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Smoke test collection for OrderManagement API (Place -> Get -> List)."
+  },
+  "item": [
+    {
+      "name": "Place Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders",
+            "host": ["{{baseUrl}}"],
+            "path": ["api","orders"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerName\": \"SMOKE_Customer\",\n  \"lines\": [\n    {\n      \"product\": \"SMOKE_Product\",\n      \"quantity\": 1,\n      \"price\": 9.99,\n      \"currency\": \"USD\"\n    }\n  ]\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('orderId returned', function () { pm.expect(json.orderId).to.be.ok; });",
+              "pm.collectionVariables.set('orderId', json.orderId);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Order",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","orders","{{orderId}}"]
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {"type": "text/javascript", "exec": [
+            "pm.expect(pm.collectionVariables.get('orderId'), 'orderId set from previous request').to.be.ok;"
+          ]}
+        },
+        {
+          "listen": "test",
+          "script": {"type": "text/javascript", "exec": [
+            "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Contains expected product', () => { pm.expect(JSON.stringify(json)).to.include('SMOKE_Product'); });"
+          ]}
+        }
+      ]
+    },
+    {
+      "name": "List Orders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/orders?page=1&pageSize=5",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","orders"],
+          "query": [
+            {"key": "page", "value": "1"},
+            {"key": "pageSize", "value": "5"}
+          ]
+        }
+      },
+      "event": [
+        {"listen": "test", "script": {"type": "text/javascript", "exec": [
+          "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+          "const text = pm.response.text();",
+          "pm.test('Response mentions orders', () => pm.expect(text.toLowerCase()).to.include('order'));"
+        ]}}
+      ]
+    }
+  ],
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:5000"}
+  ]
+}

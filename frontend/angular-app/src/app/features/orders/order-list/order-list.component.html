@@ -1,0 +1,107 @@
+<!-- Header Section -->
+<div class="header-section">
+    <nav class="breadcrumb">
+        <a routerLink="/" class="breadcrumb-link">Home</a>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Orders</span>
+    </nav>
+    <button (click)="openCreateOrderModal()" class="create-btn">
+        <span class="plus-icon">+</span>
+        Create Order
+    </button>
+</div>
+
+<!-- Create Order Modal -->
+<div *ngIf="showCreateOrderModal" class="modal-overlay">
+    <div class="modal-content">
+        <button (click)="closeCreateOrderModal()" class="modal-close">&times;</button>
+        <app-order-create (orderPlaced)="onOrderPlaced()" (cancel)="closeCreateOrderModal()"></app-order-create>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="table-container">
+    <div *ngIf="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading orders...</p>
+    </div>
+
+    <div *ngIf="!loading && dataSource.data.length === 0" class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>No Orders Found</h3>
+        <p>Create your first order to get started</p>
+        <button (click)="openCreateOrderModal()" class="create-btn">Create Order</button>
+    </div>
+
+    <table *ngIf="!loading && dataSource.data.length > 0" class="orders-table">
+        <thead>
+            <tr>
+                <th (click)="onSort('id')" class="sortable-header">
+                    ID
+                    <span class="sort-arrow" [class.active]="sortActive === 'id'" *ngIf="sortActive === 'id'">
+                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    </span>
+                </th>
+                <th (click)="onSort('customerName')" class="sortable-header">
+                    Customer
+                    <span class="sort-arrow" [class.active]="sortActive === 'customerName'"
+                        *ngIf="sortActive === 'customerName'">
+                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    </span>
+                </th>
+                <th (click)="onSort('status')" class="sortable-header">
+                    Status
+                    <span class="sort-arrow" [class.active]="sortActive === 'status'" *ngIf="sortActive === 'status'">
+                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    </span>
+                </th>
+                <th (click)="onSort('createdAt')" class="sortable-header">
+                    Created At
+                    <span class="sort-arrow" [class.active]="sortActive === 'createdAt'"
+                        *ngIf="sortActive === 'createdAt'">
+                        {{ sortDirection === 'asc' ? '↑' : '↓' }}
+                    </span>
+                </th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let order of dataSource.data; trackBy: trackByOrderId" class="table-row">
+                <td>
+                    <a [routerLink]="['/orders', order.id]" class="order-link">{{ order.id }}</a>
+                </td>
+                <td>{{ order.customerName }}</td>
+                <td>
+                    <span class="status-badge" [class]="'status-' + order.status.toLowerCase()">
+                        {{ order.status }}
+                    </span>
+                </td>
+                <td>{{ order.createdAt | localDate:'short' }}</td>
+                <td>
+                    <a [routerLink]="['/orders', order.id]" class="action-btn view-btn">View</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div *ngIf="!loading && dataSource.data.length > 0" class="pagination-container">
+        <div class="pagination-info">
+            Showing {{ (page - 1) * pageSize + 1 }} to {{ Math.min(page * pageSize, totalCount) }} of {{ totalCount }}
+            orders
+        </div>
+        <div class="pagination-controls">
+            <div class="page-size-controls">
+                <label for="pageSize" class="page-size-label">Items per page:</label>
+                <select id="pageSize" [(ngModel)]="pageSize" (change)="onPageSizeChange()" class="page-size-select">
+                    <option value="5">5</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div class="page-navigation">
+                <button (click)="previousPage()" [disabled]="page === 1" class="page-btn">Previous</button>
+                <span class="page-info">Page {{ page }} of {{ Math.ceil(totalCount / pageSize) }}</span>
+                <button (click)="nextPage()" [disabled]="page * pageSize >= totalCount" class="page-btn">Next</button>
+            </div>

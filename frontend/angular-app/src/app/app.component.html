@@ -1,0 +1,24 @@
+<div class="app-container">
+    <div *ngIf="isAuthenticated(); else loginTemplate" class="authenticated-view">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <h1>Order Management</h1>
+            <div class="user-info">
+                <span>Welcome {{ currentUser()?.username }}</span>
+                <button (click)="logout()" class="logout-button">Logout</button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <main class="main-content">
+            <router-outlet></router-outlet>
+        </main>
+    </div>
+
+    <ng-template #loginTemplate>
+        <app-clean-login></app-clean-login>
+    </ng-template>
+
+    <!-- Toast Container -->
+    <app-toast></app-toast>
+</div>
